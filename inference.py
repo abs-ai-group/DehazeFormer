@@ -23,17 +23,19 @@ def move_images_and_remove_directory(source_dir, destination_dir):
 
 
 def execute_python_file(*args):
-    command = ['python', "test.py"] + list(args)
+    command = ['python', "test.py"] + list(*args)
     subprocess.run(command)
 
 
 def create_symlink(original_path, symlink_path):
     try:
+        if os.path.islink(symlink_path):
+            os.remove(symlink_path)
         # Creating symbolic link
         os.symlink(original_path, symlink_path)
         print(f"Symbolic link created at: {symlink_path}")
-    except OSError as e:
-        print(f"Failed to create symbolic link: {e}")
+    except:
+        print(f"Failed to create symbolic link")
 
 
 def write_file_names_to_txt():
@@ -44,14 +46,14 @@ def write_file_names_to_txt():
 
 def process_dataset(dataset_path):
     os.makedirs("data/test/test", exist_ok=True)
-    create_symlink("data/test/test/hazy", "data/test/test/GT")
+    create_symlink("hazy", "data/test/test/GT")
     for split in ["train", "val", "test"]:
         split_path = os.path.join(dataset_path, split)
         image_path = os.path.join(split_path, 'images')
         os.makedirs(image_path.replace("Fisheye_contrast", "Fisheye_dehaze"), exist_ok=True)
         create_symlink(image_path, "data/test/test/hazy")
         write_file_names_to_txt()
-        execute_python_file(["--model dehazeformer-b", "--dataset test"])
+        execute_python_file(["--model", "dehazeformer-b", "--dataset", "test", "--exp", "outdoor"])
         source_directory = "results/test/dehazeformer-b/imgs"
         destination_directory = Path(str(image_path).replace("Fisheye_contrast", "Fisheye_dehaze"))
         move_images_and_remove_directory(source_directory, destination_directory)
